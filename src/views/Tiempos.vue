@@ -110,7 +110,7 @@
 
     <div class="section">
       <div class="title">
-        Tiempos de espera para algunos casos no GES quirúrgicos comunes
+        Brechas de tiempo de espera para las 7 cirugías más frecuentes
       </div>
 
       <MultiBarChart
@@ -138,7 +138,15 @@
       />
 
       <div class="description">
-        lorem ipsum tiempos de espera para casos comunes
+        El gráfico muestra las excesivas brechas en tiempos de espera para las principales
+        7 cirugías de la lista de espera no ges, al 31 de diciembre 2017. cabe señalar que
+        auditorías realizadas a 23 hospitales en 2013-2017 por la Contraloría de la República
+        evidenció errores sistemáticos en los registros del RNLE. Los errores iban desde
+        duplicación y triplicación de registros, hasta la falta de datos importantes y la presencia
+        de datos incorrectos. A pesar de que se podía modificar manualmente los registros antiguos,
+        el sistema no tenía un mecanismo de alerta frente a inconsistencias en la información, por
+        lo que varios errores pasaron desapercibidos y nunca fueron corregidos. Ver CGR No.
+        659-2017.
       </div>
     </div>
 

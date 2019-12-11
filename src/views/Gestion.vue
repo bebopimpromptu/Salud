@@ -31,7 +31,8 @@
 
     <div class="section" id="top10noGES">
       <div class="title">
-        Días de estada por Colecistectomía Laparoscópica (S1) según tipo de ingreso
+        Brecha en el consumo de días cama según tipo de ingreso (urgencia o programado) para casos
+        sometidos a la misma cirugía (severidad 1) 2017
       </div>
 
       <MultiBarChart
