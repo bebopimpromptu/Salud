@@ -113,7 +113,7 @@
         Brechas de tiempo de espera para las 7 cirugías más frecuentes
       </div>
 
-      <MultiBarChart
+      <MultiDumbellChart
         :data="tiemposCasos"
 
         category="caso"
@@ -289,7 +289,7 @@
 import Animation from '@/components/Animation.vue';
 import Bubble from '@/components/Bubble.vue';
 import BarChart from '@/components/BarChart.vue';
-import MultiBarChart from '@/components/MultiBarChart.vue';
+import MultiDumbellChart from '@/components/MultiDumbellChart.vue';
 import Heatmap from '@/components/Heatmap.vue';
 import ChileChart from '@/components/ChileChart.vue';
 import LineChart from '@/components/LineChart.vue';
@@ -309,7 +309,7 @@ export default {
     Heatmap,
     ChileChart,
     BarChart,
-    MultiBarChart,
+    MultiDumbellChart,
     LineChart,
   },
 

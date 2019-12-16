@@ -12,13 +12,15 @@
 <script>
 
 export default {
-  name: 'MultiBarChart',
+  name: 'MultiDumbellChart',
 
   data() {
     return {
       chart: null,
       id: `chardiv_${Math.random().toString(30).substr(2, 8)}`,
-      series: [],
+
+      lines: null,
+      points: [],
 
       rotated: false,
       appeared: false,
@@ -39,7 +41,6 @@ export default {
 
     category: { type: String, default: 'category' },
     categoryTitle: { type: String },
-    hideCategory: { type: Boolean, default: false },
 
     valueTitle: { type: String },
     valueFormat: { type: String, default: '#' },
@@ -67,7 +68,7 @@ export default {
     rotationBreakpoint: { type: Number, default: 1000 },
     rotatedHeight: { type: String, default: '90vh' },
 
-    colorOffset: { type: Number, default: 0 },
+    colorOffset: { type: Number, default: -1 },
     animationDuration: { type: Number, default: 500 },
     animationActive: { type: Boolean, default: true },
   },
@@ -109,7 +110,6 @@ export default {
       categoryAxis.title.text = this.categoryTitle;
       categoryAxis.title.fontSize = '1rem';
       categoryAxis.fontSize = '.8rem';
-      categoryAxis.renderer.labels.template.disabled = this.hideCategory;
 
       categoryAxis.renderer.line.strokeOpacity = 1;
       categoryAxis.renderer.grid.template.disabled = true;
@@ -117,8 +117,6 @@ export default {
       categoryAxis.renderer.labels.template.truncate = false;
       categoryAxis.renderer.labels.template.hideOversized = false;
       categoryAxis.renderer.labels.template.verticalCenter = 'middle';
-      categoryAxis.renderer.cellStartLocation = 0.1;
-      categoryAxis.renderer.cellEndLocation = 0.9;
 
       if (horizontal) { // display top to bottom when bars are horizontal
         categoryAxis.renderer.inversed = true;
@@ -133,96 +131,90 @@ export default {
       valueAxis.title.fontSize = '1rem';
       valueAxis.fontSize = '.8rem';
 
-      if (this.calcPercent) {
-        valueAxis.min = 0;
-        valueAxis.max = 100;
-        valueAxis.strictMinMax = true;
-        valueAxis.calculateTotals = true;
-      } else {
-        valueAxis.min = this.min;
-        valueAxis.max = this.max;
-      }
+      valueAxis.min = this.min;
+      valueAxis.max = this.max;
 
       valueAxis.numberFormatter = new am4core.NumberFormatter();
       valueAxis.numberFormatter.numberFormat = this.valueFormat;
 
-      if (this.axisBreak) {
-        const axisBreak = valueAxis.axisBreaks.create();
-        axisBreak.startValue = this.axisBreak.start;
-        axisBreak.endValue = this.axisBreak.end;
-        axisBreak.breakSize = this.axisBreak.breakSize;
+      // range lines
+      const lines = chart.series.push(new am4charts.ColumnSeries());
+      this.lines = lines;
 
-        const hoverState = axisBreak.states.create('hover');
-        hoverState.properties.breakSize = 1;
-        hoverState.properties.opacity = 0;
+      lines.dataFields.category = this.category;
+      lines.dataFields.categoryX = this.category;
+      lines.dataFields.categoryY = this.category;
 
-        axisBreak.defaultState.transitionDuration = 1000;
-        hoverState.transitionDuration = 2000;
-      }
+      lines.dataFields.openValueY = this.values[0].value;
+      lines.dataFields.openValueX = this.values[0].value;
+      lines.dataFields.valueY = this.values[this.values.length - 1].value;
+      lines.dataFields.valueX = this.values[this.values.length - 1].value;
 
-      // series
+      lines.columns.template.width = 0.01;
+      lines.columns.template.height = 0.01;
+      lines.fillOpacity = 0;
+      lines.strokeOpacity = 1;
+
+      lines.hidden = true;
+      lines.hiddenInLegend = true;
+
+      const duration = this.animationDuration / (this.data.length + 1);
+      lines.interpolationDuration = duration * 2;
+      lines.sequencedInterpolationDelay = duration;
+      lines.sequencedInterpolation = true;
+
+      // add points
       const self = this;
-      this.series = [];
+      this.points = [];
 
-      function createSeries(value, name, stacked = false) {
-        const series = chart.series.push(new am4charts.ColumnSeries());
-        series.stacked = stacked || self.calcPercent;
-        self.series.push(series);
+      function createPoints(value, name) {
+        const points = chart.series.push(new am4charts.LineSeries());
+        self.points.push(points);
+        points.strokeOpacity = 0;
 
-        series.name = name || value;
-        series.dataFields.value = value;
-        series.dataFields.valueX = value;
-        series.dataFields.valueY = value;
-        series.dataFields.category = self.category;
-        series.dataFields.categoryX = self.category;
-        series.dataFields.categoryY = self.category;
+        points.name = name || value;
+        points.dataFields.value = value;
+        points.dataFields.valueX = value;
+        points.dataFields.valueY = value;
+        points.dataFields.category = self.category;
+        points.dataFields.categoryX = self.category;
+        points.dataFields.categoryY = self.category;
 
-        if (self.calcPercent) {
-          series.dataFields.valueYShow = 'totalPercent';
-          series.dataFields.valueXShow = 'totalPercent';
-        }
+        const circles = points.bullets.push(new am4core.Circle());
+        circles.radius = 5;
 
-        series.columns.template.height = am4core.percent(100);
-        series.columns.template.width = am4core.percent(100);
-        series.columns.template.fill = chart.colors.getIndex(
-          chart.series.length - 1 + self.colorOffset,
-        );
-        series.columns.template.strokeOpacity = 0;
-
-        // tooltip changes
-        if (!horizontal) {
-          series.tooltip.pointerOrientation = 'vertical';
-        }
+        const color = chart.colors.getIndex(chart.series.length - 1 + self.colorOffset);
+        circles.fill = color;
+        circles.stroke = color;
 
         // modify tooltip
-        series.columns.template.tooltipText = self.tooltipText;
-        series.tooltip.getFillFromObject = false;
-        series.tooltip.background.fill = am4core.color('#fff');
-        series.tooltip.label.fill = am4core.color('#000');
+        circles.tooltipText = self.tooltipText;
 
-        series.tooltip.label.wrap = true;
-        series.tooltip.label.maxWidth = windWidth * 0.8;
+        points.tooltip.getFillFromObject = false;
+        points.tooltip.background.fill = am4core.color('#fff');
+        points.tooltip.label.fill = am4core.color('#000');
+        points.tooltip.label.wrap = true;
+        points.tooltip.label.maxWidth = windWidth * 0.8;
+        points.tooltip.pointerOrientation = 'vertical';
 
         // animations
-        if (!self.calcPercent) {
-          const duration = self.animationDuration / (self.data.length + 1);
-          series.interpolationDuration = duration * 2;
-          series.sequencedInterpolationDelay = duration;
-          series.sequencedInterpolation = true;
+        points.interpolationDuration = duration * 2;
+        points.sequencedInterpolationDelay = duration;
+        points.sequencedInterpolation = true;
 
-          // start hidden
-          series.hidden = self.animationActive;
-        }
+        // start hidden
+        points.hidden = self.animationActive;
       }
 
       for (let i = 0; i < this.values.length; i += 1) {
-        createSeries(this.values[i].value, this.values[i].name, this.values[i].stacked);
+        createPoints(this.values[i].value, this.values[i].name);
       }
       this.appeared = false;
 
       // Legend
       chart.legend = new am4charts.Legend();
       chart.legend.fontSize = '.8rem';
+      chart.legend.position = 'top';
 
       // disable zoom out
       chart.zoomOutButton.disabled = true;
@@ -236,12 +228,17 @@ export default {
     },
 
     appearOnScroll({ going }) {
-      const { series, appeared } = this;
+      const { points, lines, appeared } = this;
+
       if (!appeared && going === this.$waypointMap.GOING_IN) {
-        for (let i = 0; i < series.length; i += 1) {
-          series[i].hidden = false;
-          series[i].appear();
+        lines.hidden = false;
+        lines.appear();
+
+        for (let i = 0; i < points.length; i += 1) {
+          points[i].hidden = false;
+          points[i].appear();
         }
+
         this.appeared = true;
       }
     },
